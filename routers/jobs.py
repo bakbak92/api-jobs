@@ -1,19 +1,20 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from services.job_service import get_jobs, create_job, get_job, update_job, delete_job
-from schemas.job_schema import JobCreate, JobResponse
+from schemas.job_schema import JobCreate, JobUpdate, JobResponse, JobFilter
+from typing import Annotated
 
 jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 @jobs_router.get("/", response_model=list[JobResponse], status_code=200)
-def read_jobs():
-    return get_jobs()
+def read_jobs(filter: Annotated[JobFilter, Query()]):
+    return get_jobs(filter)
 
 @jobs_router.get("/{id}", response_model=JobResponse, status_code=200)
 def read_job(id: int):
     return get_job(id)  
 
-@jobs_router.put("/{id}", response_model=JobResponse, status_code=200)
-def put_job(id: int, job: JobCreate):
+@jobs_router.patch("/{id}", response_model=JobResponse, status_code=200)
+def patch_job(id: int, job: JobUpdate):
     return update_job(id, job)
 
 @jobs_router.post("/", response_model=JobResponse, status_code=201)
