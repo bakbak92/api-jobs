@@ -30,3 +30,10 @@ def update_job(id: int, job: JobCreate) -> JobResponse:
     job_found.skills = job.skills
     job_found.remote = job.remote
     return job_found
+
+def delete_job(id: int) -> JobResponse:
+    job_found = next((job for job in jobs if job.id == id), None)
+    if job_found is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    jobs.remove(job_found)
+    return job_found
