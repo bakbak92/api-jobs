@@ -33,3 +33,9 @@ class JobFilter(BaseModel):
     skill: str | None = None
     remote: bool | None = None
     limit: int = Field(default=10, ge=10, le=100)
+
+class JobAnalyzeRequest(BaseModel):
+    description: str = Field(min_length=10, max_length=10000)
+
+class JobAnalyzeResponse(BaseModel):
+    skills: list[str]

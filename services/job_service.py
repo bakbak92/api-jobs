@@ -1,6 +1,13 @@
 from db.data import jobs
-from schemas.job_schema import JobResponse, JobCreate, JobUpdate, JobFilter
+from schemas.job_schema import JobResponse, JobCreate, JobUpdate, JobFilter, JobAnalyzeRequest, JobAnalyzeResponse
 from fastapi import HTTPException
+from config import settings
+from openai import AsyncOpenAI, APIError
+import json
+
+client = AsyncOpenAI(
+    api_key=settings.openai_api_key,
+)
 
 def get_jobs(filter: JobFilter) -> list[JobResponse]:
     filtered_jobs = jobs
@@ -46,3 +53,36 @@ def delete_job(id: int) -> JobResponse:
         raise HTTPException(status_code=404, detail="Job not found")
     jobs.remove(job_found)
     return job_found
+
+async def analyze_job(request: JobAnalyzeRequest) -> JobAnalyzeResponse:
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You analyze job descriptions and extract the skills required for the job. "
+                        'Respond only with a JSON object of the form: {"skills": ["skill1", "skill2"]}'
+                    ),
+                },
+                {"role": "user", "content": request.description},
+            ],
+            max_tokens=300,
+            temperature=0.2,
+            response_format={"type": "json_object"},
+        )
+    except APIError as e:
+        raise HTTPException(status_code=502, detail=f"OpenAI API error: {e.message}")
+
+    content = response.choices[0].message.content or "{}"
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="Invalid JSON returned by OpenAI")
+
+    skills = data.get("skills", [])
+    if not isinstance(skills, list):
+        raise HTTPException(status_code=502, detail="Unexpected response format from OpenAI")
+
+    return JobAnalyzeResponse(skills=[s.strip() for s in skills if isinstance(s, str) and s.strip()])

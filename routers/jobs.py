@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
-from services.job_service import get_jobs, create_job, get_job, update_job, delete_job
-from schemas.job_schema import JobCreate, JobUpdate, JobResponse, JobFilter
+from services.job_service import get_jobs, create_job, get_job, update_job, delete_job, analyze_job
+from schemas.job_schema import JobCreate, JobUpdate, JobResponse, JobFilter, JobAnalyzeRequest, JobAnalyzeResponse
 from typing import Annotated
 
 jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -24,3 +24,7 @@ def post_job(job: JobCreate):
 @jobs_router.delete("/{id}", response_model=JobResponse, status_code=200)
 def remove_job(id: int):
     return delete_job(id)
+
+@jobs_router.post("/analyze", response_model=JobAnalyzeResponse, status_code=200)
+async def post_analyze_job(request: JobAnalyzeRequest):
+    return await analyze_job(request)

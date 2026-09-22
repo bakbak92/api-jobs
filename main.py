@@ -4,7 +4,7 @@ import time
 from fastapi import FastAPI, Request
 from routers.jobs import jobs_router
 
-logger = logging.getLogger("uvicorn.access")
+logger = logging.getLogger("uvicorn.error")
 app = FastAPI()
 
 
